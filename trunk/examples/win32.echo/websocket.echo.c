@@ -126,7 +126,12 @@ int client_worker(SOCKET clientsocket)
 		} else
 		if (frame_type == WS_TEXT_FRAME) {
 			out_len = BUF_LEN;
-			ws_make_frame(data, data_len, buffer, &out_len);
+			frame_type = ws_make_frame(data, data_len, buffer, &out_len, WS_TEXT_FRAME);
+			if (frame_type != WS_TEXT_FRAME) {
+				fprintf(stderr, "Make frame failed\n");
+				closesocket(clientsocket);
+				return EXIT_FAILURE;
+			}
 			#ifdef PACKET_DUMP
 				printf("Out packet:\n");
 				fwrite(buffer, 1, out_len, stdout);

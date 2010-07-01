@@ -54,7 +54,7 @@ enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
 	char *out_frame, size_t *out_len);
 
 enum ws_frame_type ws_make_frame(const char *data, size_t data_len,
-	char *out_frame, size_t *out_len);
+	char *out_frame, size_t *out_len, enum ws_frame_type frame_type);
 
 enum ws_frame_type ws_parse_input_frame(const char *input_frame, size_t input_len,
 	char *out_data, size_t *out_len);
