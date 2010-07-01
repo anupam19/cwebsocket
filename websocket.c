@@ -213,17 +213,25 @@ enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
 }
 
 enum ws_frame_type ws_make_frame(const char *data, size_t data_len,
-	char *out_frame, size_t *out_len)
+	char *out_frame, size_t *out_len, enum ws_frame_type frame_type)
 {
-	enum ws_frame_type frame_type;
+	if (frame_type == WS_TEXT_FRAME) {
+		// check on latin alphabet. If not - return error
+		char *data_ptr = (char *)data;
+		char *end_ptr = (char *)data+data_len;
+		do {
+			if (*data_ptr >> 7)
+				return WS_ERROR_FRAME;
+		} while ((++data_ptr < end_ptr));
+		// TODO introduce binary frame type
 
-	// TODO intruduce binary frame type
-
-	out_frame[0] = '\x00';
-	memcpy(&out_frame[1], data, data_len);
-	out_frame[ data_len+1 ] = '\xFF';
-	*out_len = data_len+2;
-	frame_type = WS_TEXT_FRAME;
+		out_frame[0] = '\x00';
+		memcpy(&out_frame[1], data, data_len);
+		out_frame[ data_len+1 ] = '\xFF';
+		*out_len = data_len+2;
+	} else {
+		frame_type = WS_ERROR_FRAME;
+	}
 
 	return frame_type;
 }
