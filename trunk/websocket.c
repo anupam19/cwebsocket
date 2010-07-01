@@ -71,6 +71,7 @@ static char* get_upto_linefeed(const char *start_from)
 	char *write_to;
 	uint8_t new_length = strstr(start_from, "\r\n") - start_from + 1;
 	write_to = malloc(new_length); //+1 for '\x00'
+	assert(write_to);
 	memcpy(write_to, start_from, new_length-1);
 	write_to[ new_length-1 ] = 0;
 
@@ -205,7 +206,8 @@ enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
 			"Sec-WebSocket-Protocol: %s\r\n", hs->protocol);
 	written+= sprintf(out_frame+written, "\r\n");
 	
-	assert(written <= *out_len && written+sizeof(keys) <= *out_len); // not enough out buffer length
+	// if assert fail, that means, that we corrupt memory
+	assert(written <= *out_len && written+sizeof(keys) <= *out_len);
 	memcpy(out_frame+written, raw_md5, sizeof(keys));
 	*out_len = written + sizeof(keys);
 
@@ -225,6 +227,7 @@ enum ws_frame_type ws_make_frame(const char *data, size_t data_len,
 		} while ((++data_ptr < end_ptr));
 		// TODO introduce binary frame type
 
+		assert(*out_len >= data_len+2);
 		out_frame[0] = '\x00';
 		memcpy(&out_frame[1], data, data_len);
 		out_frame[ data_len+1 ] = '\xFF';
@@ -519,7 +522,7 @@ MD5Final(unsigned char digest[16], MD5_CTX *ctx)
 #endif /* !HAVE_MD5 */
 
 /*
- * Return stringified MD5 hash for list of vectors.
+ * Return MD5 hash for in_buf.
  * out_md5 must point to 16-bytes buffer
  */
 static void

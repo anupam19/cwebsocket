@@ -61,7 +61,13 @@ int client_worker(SOCKET clientsocket)
 			printf("\n");
 		#endif
 		readed_length+= readed;
+		assert(readed_length <= BUF_LEN);
 		frame_type = ws_parse_handshake(buffer, readed_length, &hs);
+		if (frame_type == WS_INCOMPLETE_FRAME && readed_length == BUF_LEN) {
+			fprintf(stderr, "Buffer too small\n");
+			closesocket(clientsocket);
+			return EXIT_FAILURE;
+		} else
 		if (frame_type == WS_ERROR_FRAME) {
 			fprintf(stderr, "Error in incoming frame\n");
 			closesocket(clientsocket);
@@ -112,8 +118,14 @@ int client_worker(SOCKET clientsocket)
 			printf("\n");
 		#endif
 		readed_length+= readed;
+		assert(readed_length <= BUF_LEN);
 		size_t data_len = BUF_LEN;
 		frame_type = ws_parse_input_frame(buffer, readed_length, data, &data_len);
+		if (frame_type == WS_INCOMPLETE_FRAME && readed_length == BUF_LEN) {
+			fprintf(stderr, "Buffer too small\n");
+			closesocket(clientsocket);
+			return EXIT_FAILURE;
+		} else
 		if (frame_type == WS_CLOSING_FRAME) {
 			send(clientsocket, "\xFF\x00", 2, 0); // send closing frame
 			closesocket(clientsocket); // and close connection
@@ -148,9 +160,9 @@ int client_worker(SOCKET clientsocket)
 				closesocket(clientsocket);
 				return EXIT_FAILURE;
 			}
-		};
-		frame_type = WS_INCOMPLETE_FRAME;
-		readed_length = 0;
+			readed_length = 0;
+			frame_type = WS_INCOMPLETE_FRAME;
+		}
 	} // read/write cycle
 
 	closesocket(clientsocket);
