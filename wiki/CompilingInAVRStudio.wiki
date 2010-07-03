@@ -1,0 +1,13 @@
+#summary Advanced options for compiling C / C++ in AVR Studio
+#labels Featured
+
+= Options =
+
+==Compiling==
+  * -ffreestanding
+  * -fno-inline-small-functions
+  * -fdata-sections
+  * -ffunction-sections
+
+==Linker==
+  * --gc-sections
