@@ -1,0 +1,23 @@
+#summary Using Arduino libraries in AVR Studio.
+#labels Featured,Phase-Requirements
+
+= Using Arduino libraries in AVR Studio =
+
+== Getting libraries ==
+
+You can get Arduino core sources from [http://code.google.com/p/arduino/source/browse/trunk/hardware/arduino/cores/arduino trunk/hardware/arduino/cores/arduino] path, or by this command:
+{{{
+svn checkout http://arduino.googlecode.com/svn/trunk/hardware/arduino/cores/arduino arduino
+}}}
+
+Arduino libraries locate at [http://code.google.com/p/arduino/source/browse/trunk/libraries trunk/libraries] path. You can use 
+{{{
+svn checkout http://arduino.googlecode.com/svn/trunk/libraries arduino-libraries
+}}}
+
+== Using ==
+
+To use any core function or library, simply 
+{{{
+#include "needed-file.c"
+}}}
