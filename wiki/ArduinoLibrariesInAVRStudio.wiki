@@ -1,5 +1,5 @@
 #summary Using Arduino libraries in AVR Studio.
-#labels Featured,Phase-Requirements
+#labels Featured
 
 = Getting libraries =
 
