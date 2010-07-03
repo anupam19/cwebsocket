@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010 Putilov Andrey
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, free of uint8_tge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -23,6 +23,10 @@
 
 #ifndef WEBSOCKET_H
 #define	WEBSOCKET_H
+
+#include <assert.h>
+#include <stdint.h>
+#include <stddef.h> /* size_t */
 
 enum ws_frame_type {
 	WS_ERROR_FRAME,
@@ -47,17 +51,17 @@ struct handshake {
 extern "C" {
 #endif
 
-enum ws_frame_type ws_parse_handshake(const char *input_frame, size_t input_len,
+enum ws_frame_type ws_parse_handshake(const uint8_t *input_frame, size_t input_len,
 	struct handshake *hs);
 
 enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
-	char *out_frame, size_t *out_len);
+	uint8_t *out_frame, size_t *out_len);
 
-enum ws_frame_type ws_make_frame(const char *data, size_t data_len,
-	char *out_frame, size_t *out_len, enum ws_frame_type frame_type);
+enum ws_frame_type ws_make_frame(const uint8_t *data, size_t data_len,
+	uint8_t *out_frame, size_t *out_len, enum ws_frame_type frame_type);
 
-enum ws_frame_type ws_parse_input_frame(const char *input_frame, size_t input_len,
-	char *out_data, size_t *out_len);
+enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input_len,
+	uint8_t *out_data, size_t *out_len);
 
 void nullhandshake(struct handshake *hs);
 
