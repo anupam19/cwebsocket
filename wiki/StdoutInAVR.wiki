@@ -1,4 +1,5 @@
 #summary Using printf (stdout) in AVR (Arduino)
+#labels Featured
 
 = Introduction =
 
