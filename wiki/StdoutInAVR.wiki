@@ -15,7 +15,7 @@ stdout = stderr = fdevopen(serialWrite, NULL);
 where serialWrite is function
 {{{
 int serialWrite(char c, FILE *f) {
-Serial.write(c);
+    Serial.write(c);
 return 0;
 }}}
 
