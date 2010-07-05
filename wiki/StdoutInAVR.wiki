@@ -3,7 +3,7 @@
 
 = Introduction =
 
-Very often, when you use MCU, there is no standart output. But there is a way to fix this.
+Very often in MCU there is no standart output. But there is a way to fix this.
 
 
 = Details =
@@ -22,13 +22,20 @@ int serialWrite(char c, FILE *f) {
 
 = Example =
 
+Printf and Assert
 {{{
 // define __ASSERT_USE_STDERR for error messages 
 #define __ASSERT_USE_STDERR
 #include <assert.h>
 
-printf("this is test output\n");
-void *p = malloc(2000);
-assert(p); // checking, if malloc was success
-memset(p, 0, sizeof(p)); // do something
+void setup() {
+    Serial.begin(9600); // Open serial port
+}
+
+void loop() {
+    printf("this is test output\n");
+    void *p = malloc(2000);
+    assert(p); // checking, if malloc was success
+    memset(p, 0, sizeof(p)); // do something
+}
 }}}
