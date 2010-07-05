@@ -4,10 +4,15 @@
 = Options =
 
 ==Compiling==
-  * -ffreestanding
-  * -fno-inline-small-functions
-  * -fdata-sections
-  * -ffunction-sections
+  * *-ffreestanding*
+  Now you can use void main() {} without return value. This will save pair bytes.
+  * *-fno-inline-small-functions*
+  Complier will not inline small functions. If small function used in many places, this option will save bytes.
+  * *-fdata-sections*
+  Create separate sections for data block (used with linker --gc-sections option)
+  * *-ffunction-sections*
+  Create separate sections for every function (used with linker --gc-sections option)
 
 ==Linker==
-  * --gc-sections
+  * *--gc-sections*
+  Don't include unused sections in result binary file.
