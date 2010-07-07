@@ -31,12 +31,10 @@
 
 #include <stdint.h>
 
-
 #define MD5_HASH_BITS  128
 #define MD5_HASH_BYTES (MD5_HASH_BITS/8)
 #define MD5_BLOCK_BITS 512
 #define MD5_BLOCK_BYTES (MD5_BLOCK_BITS/8)
-
 
 typedef struct md5_ctx_st {
 	uint32_t a[4];
