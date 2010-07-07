@@ -26,7 +26,11 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stddef.h> /* size_t */
+
+#include "md5.h"
 
 #ifdef __AVR__
 #include <avr/pgmspace.h>
@@ -37,15 +41,13 @@
 #define strlen_P(x) strlen(x)
 #endif
 
-#include "md5.h"
-
 static const char connection[] PROGMEM = "Connection: Upgrade";
-static const char upgrade[] PROGMEM =  "Upgrade: WebSocket";
-static const char host[] PROGMEM =  "Host: ";
-static const char origin[] PROGMEM =  "Origin: ";
-static const char protocol[] PROGMEM =  "Sec-WebSocket-Protocol: ";
-static const char key1[] PROGMEM =  "Sec-WebSocket-Key1: ";
-static const char key2[] PROGMEM =  "Sec-WebSocket-Key2: ";
+static const char upgrade[] PROGMEM = "Upgrade: WebSocket";
+static const char host[] PROGMEM = "Host: ";
+static const char origin[] PROGMEM = "Origin: ";
+static const char protocol[] PROGMEM = "Sec-WebSocket-Protocol: ";
+static const char key1[] PROGMEM = "Sec-WebSocket-Key1: ";
+static const char key2[] PROGMEM = "Sec-WebSocket-Key2: ";
 
 enum ws_frame_type {
 	WS_ERROR_FRAME,
@@ -70,54 +72,54 @@ struct handshake {
 extern "C" {
 #endif
 
-/**
- *
- * @param input_frame .in. pointer to input frame
- * @param input_len .in. length of input frame
- * @param hs .out. clear with nullhandshake() handshake struct
- * @return [WS_INCOMPLETE_FRAME, WS_ERROR_FRAME, WS_OPENING_FRAME]
- */
-enum ws_frame_type ws_parse_handshake(const uint8_t *input_frame, size_t input_len,
-	struct handshake *hs);
+	/**
+	 *
+	 * @param input_frame .in. pointer to input frame
+	 * @param input_len .in. length of input frame
+	 * @param hs .out. clear with nullhandshake() handshake struct
+	 * @return [WS_INCOMPLETE_FRAME, WS_ERROR_FRAME, WS_OPENING_FRAME]
+	 */
+	enum ws_frame_type ws_parse_handshake(const uint8_t *input_frame, size_t input_len,
+		struct handshake *hs);
 
-/**
- *
- * @param hs .in. filled handshake struct
- * @param out_frame .out. pointer to out frame buffer
- * @param out_len .in.out. length of out frame buffer. Return length of out frame
- * @return WS_OPENING_FRAME
- */
-enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
-	uint8_t *out_frame, size_t *out_len);
+	/**
+	 *
+	 * @param hs .in. filled handshake struct
+	 * @param out_frame .out. pointer to out frame buffer
+	 * @param out_len .in.out. length of out frame buffer. Return length of out frame
+	 * @return WS_OPENING_FRAME
+	 */
+	enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
+		uint8_t *out_frame, size_t *out_len);
 
-/**
- *
- * @param data .in. pointer to input data array
- * @param data_len .in. length of data array
- * @param out_frame .out. pointer to out frame buffer
- * @param out_len .in.out. length of out frame buffer. Return length of out frame
- * @param frame_type .in. [WS_TEXT_FRAME] frame type to build
- * @return [WS_ERROR_FRAME, WS_TEXT_FRAME]
- */
-enum ws_frame_type ws_make_frame(const uint8_t *data, size_t data_len,
-	uint8_t *out_frame, size_t *out_len, enum ws_frame_type frame_type);
+	/**
+	 *
+	 * @param data .in. pointer to input data array
+	 * @param data_len .in. length of data array
+	 * @param out_frame .out. pointer to out frame buffer
+	 * @param out_len .in.out. length of out frame buffer. Return length of out frame
+	 * @param frame_type .in. [WS_TEXT_FRAME] frame type to build
+	 * @return [WS_ERROR_FRAME, WS_TEXT_FRAME]
+	 */
+	enum ws_frame_type ws_make_frame(const uint8_t *data, size_t data_len,
+		uint8_t *out_frame, size_t *out_len, enum ws_frame_type frame_type);
 
-/**
- *
- * @param input_frame .in. pointer to input frame
- * @param input_len .in. length of input frame
- * @param out_data .out. pointer to extracted data
- * @param out_len .in.out. length of out data buffer. Return length of extracted data
- * @return [WS_INCOMPLETE_FRAME, WS_TEXT_FRAME, WS_CLOSING_FRAME, WS_ERROR_FRAME]
- */
-enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input_len,
-	uint8_t *out_data, size_t *out_len);
+	/**
+	 *
+	 * @param input_frame .in. pointer to input frame
+	 * @param input_len .in. length of input frame
+	 * @param out_data .out. pointer to extracted data
+	 * @param out_len .in.out. length of out data buffer. Return length of extracted data
+	 * @return [WS_INCOMPLETE_FRAME, WS_TEXT_FRAME, WS_CLOSING_FRAME, WS_ERROR_FRAME]
+	 */
+	enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input_len,
+		uint8_t *out_data, size_t *out_len);
 
-/**
- *
- * @param hs .out. nulled handshake struct
- */
-void nullhandshake(struct handshake *hs);
+	/**
+	 *
+	 * @param hs .out. nulled handshake struct
+	 */
+	void nullhandshake(struct handshake *hs);
 
 #ifdef	__cplusplus
 }
