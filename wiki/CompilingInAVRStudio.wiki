@@ -14,5 +14,5 @@
   Create separate sections for every function (used with linker --gc-sections option)
 
 ==Linker==
-  * *--gc-sections*
+  * *-Wl,--gc-sections*
   Don't include unused sections in result binary file.
