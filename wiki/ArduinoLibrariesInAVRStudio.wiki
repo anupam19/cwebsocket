@@ -5,7 +5,7 @@
 
 You can get Arduino core sources from [http://code.google.com/p/arduino/source/browse/trunk/hardware/arduino/cores/arduino trunk/hardware/arduino/cores/arduino] path, or by this command:
 {{{
-svn checkout http://arduino.googlecode.com/svn/trunk/hardware/arduino/cores/arduino arduino
+svn checkout http://arduino.googlecode.com/svn/trunk/hardware/arduino/cores/arduino arduino-core
 }}}
 
 Arduino libraries locate at [http://code.google.com/p/arduino/source/browse/trunk/libraries trunk/libraries] path. You can use 
