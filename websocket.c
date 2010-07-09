@@ -52,7 +52,6 @@ static uint32_t doStuffToObtainAnInt32(const char *key)
 		if (key[i] == ' ')
 			space_count++;
 	} while (key[++i]);
-	tail_res = 0;
 
 	return ((uint32_t) strtoul(res_decimals, NULL, 10) / space_count);
 }
@@ -244,13 +243,13 @@ enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input
 {
 	enum ws_frame_type frame_type;
 
-	assert(out_len);
+	assert(out_data && *out_len);
 	assert(input_len);
 
 	if (input_len < 2)
 		return WS_INCOMPLETE_FRAME;
 
-	if (input_frame[0]&0x80 != 0x80) // text frame
+	if ((input_frame[0]&0x80) != 0x80) // text frame
 	{
 		const uint8_t *data_start = &input_frame[1];
 		uint8_t *end = (uint8_t *) memchr(data_start, 0xFF, input_len - 1);
@@ -262,7 +261,7 @@ enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input
 		} else {
 			frame_type = WS_INCOMPLETE_FRAME;
 		}
-	} else if (input_frame[0]&0x80 == 0x80) // binary frame
+	} else if ((input_frame[0]&0x80) == 0x80) // binary frame
 	{
 		if (input_frame[0] == 0xFF && input_frame[1] == 0x00)
 			frame_type = WS_CLOSING_FRAME;
@@ -270,7 +269,7 @@ enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input
 			uint32_t data_length = 0;
 			uint32_t old_data_length = 0;
 			const uint8_t *frame_ptr = &input_frame[1];
-			while (*frame_ptr & 0x80 == 0x80) {
+			while ((*frame_ptr&0x80) == 0x80) {
 				old_data_length = data_length;
 				data_length *= 0x80;
 				data_length += *frame_ptr & 0xF9;
