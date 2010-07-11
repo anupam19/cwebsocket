@@ -21,7 +21,7 @@
  *
  */
  
-#define DEBUG
+//#define DEBUG
 #define BUF_LEN 300
 #include <Ethernet.h>
 
@@ -44,11 +44,11 @@ void setup()
 {
   Ethernet.begin(mac, ip);
   server.begin();
-#ifdef DEBUG
-  Serial.begin(9600);
-  stdout = stderr = fdevopen(serialWrite, NULL);
-  printf_P(PSTR("Server started. waiting for clients...\n"));
-#endif
+  #ifdef DEBUG
+    Serial.begin(9600);
+    stdout = stderr = fdevopen(serialWrite, NULL);
+    printf_P(PSTR("Server started. waiting for clients...\n"));
+  #endif
 }
 
 int clientWorker(Client client)
@@ -59,10 +59,11 @@ int clientWorker(Client client)
   struct handshake hs;
   nullhandshake(&hs);
 
-#ifdef DEBUG
-  printf_P(PSTR("New client connected\n"));
-#endif
+  #ifdef DEBUG
+    printf_P(PSTR("New client connected\n"));
+  #endif
   
+  #define terminate() client.stop(); return 1
   // read openinig handshake
   while (frame_type == WS_INCOMPLETE_FRAME) {
     while (client.available() && bufPointer <= &buffer[BUF_LEN]) {
@@ -70,44 +71,41 @@ int clientWorker(Client client)
     }
     size_t readed_length = bufPointer-buffer;
     
-#ifdef DEBUG
-    printf_P(PSTR("ws_parse_handshake with frame(%d):\n"), readed_length);
-    fwrite(buffer, 1, readed_length, stdout);
-    printf_P(PSTR("\n"));
-#endif
+    #ifdef DEBUG
+      printf_P(PSTR("ws_parse_handshake with frame(%d):\n"), readed_length);
+      fwrite(buffer, 1, readed_length, stdout);
+      printf_P(PSTR("\n"));
+    #endif
     frame_type = ws_parse_handshake(buffer, readed_length, &hs);
     if (frame_type == WS_INCOMPLETE_FRAME && readed_length == BUF_LEN) {
-#ifdef DEBUG
-      fprintf_P(stderr, PSTR("Buffer too small\n"));
-#endif
-      client.stop();
-      return 1;
+      #ifdef DEBUG
+        fprintf_P(stderr, PSTR("Buffer too small\n"));
+      #endif
+      terminate();
     } else
     if (frame_type == WS_ERROR_FRAME) {
-#ifdef DEBUG
-      fprintf_P(stderr, PSTR("Error in incoming frame\n"));
-#endif
-      client.stop();
-      return 1;
+      #ifdef DEBUG
+        fprintf_P(stderr, PSTR("Error in incoming frame\n"));
+      #endif
+      terminate();
     }
   }
   assert(frame_type == WS_OPENING_FRAME);
 
   if (strcmp_P(hs.resource, PSTR("/echo")) != 0) {
-#ifdef DEBUG
-    fprintf_P(stderr, PSTR("Resource is wrong:%s\n"), hs.resource);
-#endif
-    client.stop();
-    return 1;
+    #ifdef DEBUG
+      fprintf_P(stderr, PSTR("Resource is wrong:%s\n"), hs.resource);
+    #endif
+    terminate();
   }
   
   size_t out_len = BUF_LEN;
   ws_get_handshake_answer(&hs, buffer, &out_len);
-#ifdef DEBUG
-  printf_P(PSTR("Write frame:\n"));
-  fwrite(buffer, 1, out_len, stdout);
-  printf_P(PSTR("\n"));
-#endif
+  #ifdef DEBUG
+    printf_P(PSTR("Write frame:\n"));
+    fwrite(buffer, 1, out_len, stdout);
+    printf_P(PSTR("\n"));
+  #endif
   client.write(buffer, out_len);
   
   if (client.connected()) { // we are establish websocket connection
@@ -116,58 +114,53 @@ int clientWorker(Client client)
     while (frame_type == WS_INCOMPLETE_FRAME) {
       while (!client.available() && client.connected()) {}; // wait for data
       if (!client.connected()) { // client disconnected
-        client.stop();
-        return 1;
+        terminate();
       }
       while (client.available() && bufPointer <= &buffer[BUF_LEN]) {
         *bufPointer++ = client.read();
       }
       size_t readed_length = bufPointer-buffer;
       
-#ifdef DEBUG
-      printf_P(PSTR("ws_parse_input_frame with frame(%d):\n"), readed_length);
-      fwrite(buffer, 1, readed_length, stdout);
-      printf_P(PSTR("\n"));
-#endif
+      #ifdef DEBUG
+        printf_P(PSTR("ws_parse_input_frame with frame(%d):\n"), readed_length);
+        fwrite(buffer, 1, readed_length, stdout);
+        printf_P(PSTR("\n"));
+      #endif
       uint8_t *data;
       size_t data_len = BUF_LEN;
       frame_type = ws_parse_input_frame(buffer, readed_length, &data, &data_len);
       if (frame_type == WS_INCOMPLETE_FRAME && readed_length == BUF_LEN) {
-#ifdef DEBUG
-        fprintf_P(stderr, PSTR("Buffer too small\n"));
-#endif
-        client.stop();
-        return 1;
+        #ifdef DEBUG
+          fprintf_P(stderr, PSTR("Buffer too small\n"));
+        #endif
+        terminate();
       } else
       if (frame_type == WS_ERROR_FRAME) {
-#ifdef DEBUG
-        fprintf_P(stderr, PSTR("Error in incoming frame\n"));
-#endif
-        client.stop();
-        return 1;
+        #ifdef DEBUG
+          fprintf_P(stderr, PSTR("Error in incoming frame\n"));
+        #endif
+        terminate();
       } else
       if (frame_type == WS_CLOSING_FRAME) {
-#ifdef DEBUG
-        printf_P(PSTR("Get closing frame\n"));
-#endif
+        #ifdef DEBUG
+          printf_P(PSTR("Get closing frame\n"));
+        #endif
         client.write((uint8_t *)"\xFF\x00", 2);
-        client.stop();
         break;
       } else
       if (frame_type == WS_TEXT_FRAME) {
-#ifdef DEBUG
-        fprintf_P(stderr, PSTR("Get text frame(%d):\n"), data_len);
-        fwrite(data, 1, data_len, stdout);
-        printf_P(PSTR("\n"));
-#endif
+        #ifdef DEBUG
+          fprintf_P(stderr, PSTR("Get text frame(%d):\n"), data_len);
+          fwrite(data, 1, data_len, stdout);
+          printf_P(PSTR("\n"));
+        #endif
         out_len = BUF_LEN;
         frame_type = ws_make_frame(data, data_len, buffer, &out_len, WS_TEXT_FRAME);
         if (frame_type != WS_TEXT_FRAME) {
-#ifdef DEBUG
-          fprintf_P(stderr, PSTR("Make frame failed\n"));
-#endif
-          client.stop();
-          return 1;
+          #ifdef DEBUG
+            fprintf_P(stderr, PSTR("Make frame failed\n"));
+          #endif
+          terminate();
         }
         client.write(buffer, out_len);
         
@@ -186,8 +179,8 @@ void loop()
   Client client = server.available();
   if (client) {
     clientWorker(client);
-#ifdef DEBUG
-    printf_P(PSTR("Disconnected\n"));
-#endif
+    #ifdef DEBUG
+      printf_P(PSTR("Disconnected\n"));
+    #endif
   }
 }
