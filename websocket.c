@@ -30,6 +30,8 @@
 #define FALSE 1
 #endif
 
+static char rn[] PROGMEM = "\r\n";
+
 void nullhandshake(struct handshake *hs)
 {
 	hs->host = NULL;
@@ -42,7 +44,7 @@ void nullhandshake(struct handshake *hs)
 
 static uint32_t doStuffToObtainAnInt32(const char *key)
 {
-	char res_decimals[50] = "";
+	char res_decimals[15] = "";
 	char *tail_res = res_decimals;
 	uint8_t space_count = 0;
 	uint8_t i = 0;
@@ -56,12 +58,12 @@ static uint32_t doStuffToObtainAnInt32(const char *key)
 	return ((uint32_t) strtoul(res_decimals, NULL, 10) / space_count);
 }
 
-static uint8_t* get_upto_linefeed(const char *start_from)
+static char* get_upto_linefeed(const char *start_from)
 {
 	char *write_to;
-	uint8_t new_length = strstr(start_from, "\r\n") - start_from + 1;
+	uint8_t new_length = strstr_P(start_from, rn) - start_from + 1;
 	assert(new_length);
-	write_to = malloc(new_length); //+1 for '\x00'
+	write_to = (char *)malloc(new_length); //+1 for '\x00'
 	assert(write_to);
 	memcpy(write_to, start_from, new_length - 1);
 	write_to[ new_length - 1 ] = 0;
@@ -72,15 +74,15 @@ static uint8_t* get_upto_linefeed(const char *start_from)
 enum ws_frame_type ws_parse_handshake(const uint8_t *input_frame, size_t input_len,
 		struct handshake *hs)
 {
-	const uint8_t *input_ptr = input_frame;
-	const uint8_t *end_ptr = input_frame + input_len;
+	const char *input_ptr = (const char *)input_frame;
+	const char *end_ptr = (const char *)input_frame + input_len;
 
 	// measure resource size
-	uint8_t *first = strchr(input_frame, ' ');
+	char *first = strchr((const char *)input_frame, ' ');
 	if (!first)
 		return WS_ERROR_FRAME;
 	first++;
-	uint8_t *second = strchr(first, ' ');
+	char *second = strchr(first, ' ');
 	if (!second)
 		return WS_ERROR_FRAME;
 
@@ -88,43 +90,43 @@ enum ws_frame_type ws_parse_handshake(const uint8_t *input_frame, size_t input_l
 		free(hs->resource);
 		hs->resource = NULL;
 	}
-	hs->resource = malloc(second - first + 1); // +1 is for \x00 symbol
+	hs->resource = (char *)malloc(second - first + 1); // +1 is for \x00 symbol
 	assert(hs->resource);
 
-	if (sscanf(input_ptr, "GET %s HTTP/1.1\r\n", hs->resource) != 1)
+	if (sscanf_P(input_ptr, PSTR("GET %s HTTP/1.1\r\n"), hs->resource) != 1)
 		return WS_ERROR_FRAME;
-	input_ptr = strstr(input_ptr, "\r\n") + 2;
+	input_ptr = strstr_P(input_ptr, rn) + 2;
 
 	/*
 		parse next lines
 	 */
-#define input_ptr_len (input_len - (input_ptr-input_frame))
-#define prepare(x) do {if (x) { free(x); x = NULL; }} while(0)
+	#define input_ptr_len (input_len - (input_ptr-input_frame))
+	#define prepare(x) do {if (x) { free(x); x = NULL; }} while(0)
 	uint8_t connection_flag = FALSE;
 	uint8_t upgrade_flag = FALSE;
 	while (input_ptr < end_ptr && input_ptr[0] != '\r' && input_ptr[1] != '\n') {
 		if (memcmp_P(input_ptr, host, strlen_P(host)) == 0) {
-			input_ptr += strlen(host);
+			input_ptr += strlen_P(host);
 			prepare(hs->host);
 			hs->host = get_upto_linefeed(input_ptr);
 		} else
 			if (memcmp_P(input_ptr, origin, strlen_P(origin)) == 0) {
-			input_ptr += strlen(origin);
+			input_ptr += strlen_P(origin);
 			prepare(hs->origin);
 			hs->origin = get_upto_linefeed(input_ptr);
 		} else
 			if (memcmp_P(input_ptr, protocol, strlen_P(protocol)) == 0) {
-			input_ptr += strlen(protocol);
+			input_ptr += strlen_P(protocol);
 			prepare(hs->protocol);
 			hs->protocol = get_upto_linefeed(input_ptr);
 		} else
 			if (memcmp_P(input_ptr, key1, strlen_P(key1)) == 0) {
-			input_ptr += strlen(key1);
+			input_ptr += strlen_P(key1);
 			prepare(hs->key1);
 			hs->key1 = get_upto_linefeed(input_ptr);
 		} else
 			if (memcmp_P(input_ptr, key2, strlen_P(key2)) == 0) {
-			input_ptr += strlen(key2);
+			input_ptr += strlen_P(key2);
 			prepare(hs->key2);
 			hs->key2 = get_upto_linefeed(input_ptr);
 		} else
@@ -135,7 +137,7 @@ enum ws_frame_type ws_parse_handshake(const uint8_t *input_frame, size_t input_l
 			upgrade_flag = TRUE;
 		};
 
-		input_ptr = strstr(input_ptr, "\r\n") + 2;
+		input_ptr = strstr_P(input_ptr, rn) + 2;
 	}
 
 	// we have read all data, so check them
@@ -154,8 +156,7 @@ enum ws_frame_type ws_parse_handshake(const uint8_t *input_frame, size_t input_l
 enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
 		uint8_t *out_frame, size_t *out_len)
 {
-	assert(out_len && *out_len);
-	assert(out_frame);
+	assert(out_frame && *out_len);
 	// hs->key3 is always not NULL
 	assert(hs && hs->origin && hs->host && hs->resource && hs->key1 && hs->key2);
 
@@ -176,19 +177,19 @@ enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
 	memcpy(&keys[8], hs->key3, 8);
 	md5(raw_md5, keys, sizeof (keys)*8);
 
-	int written = sprintf(out_frame,
-			"HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
+	unsigned int written = sprintf_P((char *)out_frame,
+			PSTR("HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
 			"Upgrade: WebSocket\r\n"
 			"Connection: Upgrade\r\n"
 			"Sec-WebSocket-Origin: %s\r\n"
-			"Sec-WebSocket-Location: ws://%s%s\r\n",
+			"Sec-WebSocket-Location: ws://%s%s\r\n"),
 			hs->origin,
 			hs->host,
 			hs->resource);
 	if (hs->protocol)
-		written += sprintf(out_frame + written,
-			"Sec-WebSocket-Protocol: %s\r\n", hs->protocol);
-	written += sprintf(out_frame + written, "\r\n");
+		written += sprintf_P((char *)out_frame + written,
+			PSTR("Sec-WebSocket-Protocol: %s\r\n"), hs->protocol);
+	written += sprintf_P((char *)out_frame + written, rn);
 
 	// if assert fail, that means, that we corrupt memory
 	assert(written <= *out_len && written + sizeof (keys) <= *out_len);
@@ -201,6 +202,9 @@ enum ws_frame_type ws_get_handshake_answer(const struct handshake *hs,
 enum ws_frame_type ws_make_frame(const uint8_t *data, size_t data_len,
 		uint8_t *out_frame, size_t *out_len, enum ws_frame_type frame_type)
 {
+	assert(out_frame && *out_len);
+	assert(data);
+	
 	if (frame_type == WS_TEXT_FRAME) {
 		// check on latin alphabet. If not - return error
 		uint8_t *data_ptr = (uint8_t *) data;
@@ -230,7 +234,7 @@ enum ws_frame_type ws_make_frame(const uint8_t *data, size_t data_len,
 		assert(*out_len >= 1 + size_len + data_len);
 		out_frame[0] = '\x80';
 		uint8_t i = 0;
-		for (i = 0; i < size_len; i++)
+		for (i = 0; i < size_len; i++) // copying big-endian length
 			out_frame[1 + i] = out_size_buf[size_len - 1 - i];
 		memcpy(&out_frame[1 + size_len], data, data_len);
 	}
@@ -239,11 +243,11 @@ enum ws_frame_type ws_make_frame(const uint8_t *data, size_t data_len,
 }
 
 enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input_len,
-		uint8_t *out_data, size_t *out_len)
+		uint8_t **out_data_ptr, size_t *out_len)
 {
 	enum ws_frame_type frame_type;
 
-	assert(out_data && *out_len);
+	assert(out_len); 
 	assert(input_len);
 
 	if (input_len < 2)
@@ -254,8 +258,8 @@ enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input
 		const uint8_t *data_start = &input_frame[1];
 		uint8_t *end = (uint8_t *) memchr(data_start, 0xFF, input_len - 1);
 		if (end) {
-			assert(end - data_start <= *out_len);
-			memcpy(out_data, data_start, end - data_start);
+			assert((size_t)(end - data_start) <= input_len);
+			*out_data_ptr = (uint8_t *)data_start;
 			*out_len = end - data_start;
 			frame_type = WS_TEXT_FRAME;
 		} else {
@@ -274,11 +278,11 @@ enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input
 				data_length *= 0x80;
 				data_length += *frame_ptr & 0xF9;
 				if (data_length < old_data_length || // overflow occured
-						*out_len < data_length) // buffer small
+						input_len < data_length) // something wrong :\
 					return WS_ERROR_FRAME;
 				frame_ptr++;
 			}
-			memcpy(out_data, frame_ptr, data_length);
+			*out_data_ptr = (uint8_t *)frame_ptr;
 			*out_len = data_length;
 
 			frame_type = WS_BINARY_FRAME;
