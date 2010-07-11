@@ -26,7 +26,8 @@
 #include <string.h>
 #include <assert.h>
 #include <winsock.h>
-#include "websocket.h"
+#include "md5.c"
+#include "websocket.c"
 
 #define PORT 8080
 #define BUF_LEN 0x1FF
@@ -36,18 +37,15 @@ int terminate = FALSE;
 
 int client_worker(SOCKET clientsocket)
 {
-	char buffer[BUF_LEN];
-	char data[BUF_LEN];
-
-	// read openinig handshake
-	struct handshake hs;
-	nullhandshake(&hs);
+	static uint8_t buffer[BUF_LEN];
 	size_t readed_length = 0;
 	size_t out_len = BUF_LEN;
 	int written = 0;
-
 	enum ws_frame_type frame_type = WS_INCOMPLETE_FRAME;
+	struct handshake hs;
+	nullhandshake(&hs);
 
+	// read openinig handshake
 	while (frame_type == WS_INCOMPLETE_FRAME) {
 		int readed = recv(clientsocket, buffer+readed_length, BUF_LEN-readed_length, 0);
 		if (!readed) {
@@ -78,7 +76,7 @@ int client_worker(SOCKET clientsocket)
 
 	// if resource is right, generate answer handshake and send it
 	if (strcmp(hs.resource, "/echo") != 0) {
-		fprintf(stderr, "Error in incoming frame\n");
+		fprintf(stderr, "Resource is wrong:%s\n", hs.resource);
 		closesocket(clientsocket);
 		return EXIT_FAILURE;
 	}
@@ -119,8 +117,9 @@ int client_worker(SOCKET clientsocket)
 		#endif
 		readed_length+= readed;
 		assert(readed_length <= BUF_LEN);
-		size_t data_len = BUF_LEN;
-		frame_type = ws_parse_input_frame(buffer, readed_length, data, &data_len);
+		size_t data_len;
+		uint8_t *data;
+		frame_type = ws_parse_input_frame(buffer, readed_length, &data, &data_len);
 		if (frame_type == WS_INCOMPLETE_FRAME && readed_length == BUF_LEN) {
 			fprintf(stderr, "Buffer too small\n");
 			closesocket(clientsocket);

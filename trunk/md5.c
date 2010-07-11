@@ -28,12 +28,11 @@
 #include "md5.h"
 #include <stdint.h>
 #include <string.h>
-
 #ifdef __AVR__
-#include <avr/pgmspace.h>
+	#include <avr/pgmspace.h>
 #else
-#define PROGMEM
-#define pgm_read_dword(x) (*(x))
+	#define PROGMEM
+	#define pgm_read_dword(x) (*(x))
 #endif
 
 uint32_t md5_T[] PROGMEM = {
@@ -51,8 +50,6 @@ uint32_t md5_T[] PROGMEM = {
 	0x85845dd1, 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
 	0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391 };
 
-#undef DEBUG
- 
 void md5_init(md5_ctx_t *s){
 	s->counter = 0;
 	s->a[0] = 0x67452301;

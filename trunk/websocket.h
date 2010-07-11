@@ -24,21 +24,28 @@
 #ifndef WEBSOCKET_H
 #define	WEBSOCKET_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #include <assert.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include <stdint.h> /* uint8_t */
+#include <stdlib.h> /* strtoul */
 #include <string.h>
+#include <stdio.h> /* sscanf */
+#include <ctype.h> /* isdigit */
 #include <stddef.h> /* size_t */
-
 #include "md5.h"
-
 #ifdef __AVR__
-#include <avr/pgmspace.h>
+	#include <avr/pgmspace.h>
 #else
-#define PROGMEM
-#define pgm_read_dword(x) (*(x))
-#define memcmp_P(x,y,z) memcmp(x,y,z)
-#define strlen_P(x) strlen(x)
+	#define PROGMEM
+	#define PSTR
+	#define strstr_P strstr
+	#define sscanf_P sscanf
+	#define sprintf_P sprintf
+	#define strlen_P strlen
+	#define memcmp_P memcmp
 #endif
 
 static const char connection[] PROGMEM = "Connection: Upgrade";
@@ -67,10 +74,6 @@ struct handshake {
 	char *key2;
 	char key3[8];
 };
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
 
 	/**
 	 *
@@ -108,12 +111,12 @@ extern "C" {
 	 *
 	 * @param input_frame .in. pointer to input frame
 	 * @param input_len .in. length of input frame
-	 * @param out_data .out. pointer to extracted data
+	 * @param out_data_ptr .out. pointer to extracted data in input frame
 	 * @param out_len .in.out. length of out data buffer. Return length of extracted data
 	 * @return [WS_INCOMPLETE_FRAME, WS_TEXT_FRAME, WS_CLOSING_FRAME, WS_ERROR_FRAME]
 	 */
 	enum ws_frame_type ws_parse_input_frame(const uint8_t *input_frame, size_t input_len,
-		uint8_t *out_data, size_t *out_len);
+		uint8_t **out_data_ptr, size_t *out_len);
 
 	/**
 	 *
