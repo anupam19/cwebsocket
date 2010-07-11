@@ -148,7 +148,7 @@ int clientWorker(Client client)
       } else
       if (frame_type == WS_CLOSING_FRAME) {
 #ifdef DEBUG
-        printf_P(PSTR("Get closing frame"));
+        printf_P(PSTR("Get closing frame\n"));
 #endif
         client.write((uint8_t *)"\xFF\x00", 2);
         client.stop();
