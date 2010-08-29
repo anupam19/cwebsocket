@@ -16,3 +16,7 @@
 ==Linker==
   * *-Wl,--gc-sections*
   Don't include unused sections in result binary file.
+  * *-Wl,--relax*
+  Replace all CALL (4 bytes) statements with RCALL (2 bytes) where possible.
+
+[http://www.tty1.net/blog/2008-04-29-avr-gcc-optimisations_en.html More information]
